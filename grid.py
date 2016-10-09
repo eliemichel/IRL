@@ -5,10 +5,10 @@ from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 
 def heatmap(a):
-	"""a: 2D array to plot as a heatmap"""
-	#plt.imshow(a, cmap='hot', interpolation='nearest')
-	plt.imshow(a, cmap='gray', interpolation='nearest')
-	plt.show()
+    """a: 2D array to plot as a heatmap"""
+    #plt.imshow(a, cmap='hot', interpolation='nearest')
+    plt.imshow(a, cmap='gray', interpolation='nearest')
+    plt.show()
 
 
 #  +-----------> x
@@ -46,78 +46,39 @@ P = np.zeros((k, n, n))
 # P[UP, (x, y), (x - 1, y)] = 0.1
 # P[UP, (x, y), (other)] = 0
 
-# TODO: That transition tensor takes damn many lines to describe…
-# Make it shorter, at least by somehow factorizing directions
-
-# First build the random diffusion
-grid.fill(1)
-grid[-1,:] = 0
-P[UP] += np.roll(S, shift=+w, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[:,0] = 0
-P[UP] += np.roll(S, shift=-1, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[:,-1] = 0
-P[UP] += np.roll(S, shift=+1, axis=0) * grid.reshape(-1)
-
-# Normalize random diffusion and multiply it by 30%
-P[UP] = normalize(P[UP], axis=0, norm='l1') * 0.3
-
-# Add the main direction
+# Masks used to block illegal moves on grid border
+mask = np.zeros((k, n))
 grid.fill(1)
 grid[0,:] = 0
-P[UP] += np.roll(S, shift=-w, axis=0) * grid.reshape(-1) * 0.7
-
-# Renormalize for cells in which random diffusion was 0
-P[UP] = normalize(P[UP], axis=0, norm='l1')
-
-# Idem for DOWN
-grid.fill(1)
-grid[0,:] = 0
-P[DOWN] += np.roll(S, shift=-w, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[:,0] = 0
-P[DOWN] += np.roll(S, shift=-1, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[:,-1] = 0
-P[DOWN] += np.roll(S, shift=+1, axis=0) * grid.reshape(-1)
-P[DOWN] = normalize(P[DOWN], axis=0, norm='l1') * 0.3
+mask[UP] = grid.reshape(-1)
 grid.fill(1)
 grid[-1,:] = 0
-P[DOWN] += np.roll(S, shift=+w, axis=0) * grid.reshape(-1) * 0.7
-P[DOWN] = normalize(P[DOWN], axis=0, norm='l1')
-
-# Idem for RIGHT
-grid.fill(1)
-grid[0,:] = 0
-P[RIGHT] += np.roll(S, shift=-w, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[-1,:] = 0
-P[RIGHT] += np.roll(S, shift=+w, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[:,0] = 0
-P[RIGHT] += np.roll(S, shift=-1, axis=0) * grid.reshape(-1)
-P[RIGHT] = normalize(P[RIGHT], axis=0, norm='l1') * 0.3
+mask[DOWN] = grid.reshape(-1)
 grid.fill(1)
 grid[:,-1] = 0
-P[RIGHT] += np.roll(S, shift=+1, axis=0) * grid.reshape(-1) * 0.7
-P[RIGHT] = normalize(P[RIGHT], axis=0, norm='l1')
-
-# Idem for LEFT
-grid.fill(1)
-grid[0,:] = 0
-P[LEFT] += np.roll(S, shift=-w, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[-1,:] = 0
-P[LEFT] += np.roll(S, shift=+w, axis=0) * grid.reshape(-1)
-grid.fill(1)
-grid[:,-1] = 0
-P[LEFT] += np.roll(S, shift=+1, axis=0) * grid.reshape(-1)
-P[LEFT] = normalize(P[LEFT], axis=0, norm='l1') * 0.3
+mask[RIGHT] = grid.reshape(-1)
 grid.fill(1)
 grid[:,0] = 0
-P[LEFT] += np.roll(S, shift=-1, axis=0) * grid.reshape(-1) * 0.7
-P[LEFT] = normalize(P[LEFT], axis=0, norm='l1')
+mask[LEFT] = grid.reshape(-1)
+
+# `move` is the non randomized action transition tensor, used in a second time
+# to build P
+move = np.zeros((k, n, n))
+move[UP]    = np.roll(S, shift=-w, axis=0) * mask[UP]
+move[DOWN]  = np.roll(S, shift=+w, axis=0) * mask[DOWN]
+move[RIGHT] = np.roll(S, shift=+1, axis=0) * mask[RIGHT]
+move[LEFT]  = np.roll(S, shift=-1, axis=0) * mask[LEFT]
+
+directions = [UP, DOWN, RIGHT, LEFT]
+for d in directions:
+    # First build the random diffusion
+    P[d] += sum([ move[x] for x in directions if x != d ])
+    # Normalize random diffusion and multiply it by 30%
+    P[d] = normalize(P[d], axis=0, norm='l1') * 0.3
+    # Add the main direction
+    P[d] += move[d] * 0.7
+    # Renormalize for cells in which random diffusion was 0
+    P[d] = normalize(P[d], axis=0, norm='l1')
 
 P[NOOP] = np.eye(n)
 
@@ -134,11 +95,11 @@ R = grid.reshape(-1)
 # Observed agent action decision policy, from which we'll try to recover R
 # (for the case w = h = 5)
 policy = np.array([
-	[RIGHT, RIGHT, RIGHT, RIGHT, NOOP],
-	[UP,    RIGHT, RIGHT, UP,    UP  ],
-	[UP   , UP   , UP   , UP   , UP  ],
-	[UP   , UP   , RIGHT, UP   , UP  ],
-	[UP   , RIGHT, RIGHT, RIGHT, UP  ],
+    [RIGHT, RIGHT, RIGHT, RIGHT, NOOP],
+    [UP,    RIGHT, RIGHT, UP,    UP  ],
+    [UP   , UP   , UP   , UP   , UP  ],
+    [UP   , UP   , RIGHT, UP   , UP  ],
+    [UP   , RIGHT, RIGHT, RIGHT, UP  ],
 ]).reshape(-1)
 
 
