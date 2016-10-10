@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from numpy.linalg import inv
 from sklearn.preprocessing import normalize
+from scipy.optimize import linprog
 import matplotlib.pyplot as plt
 
 def heatmap(a):
@@ -35,10 +37,13 @@ UP, DOWN, RIGHT, LEFT, NOOP = 0, 1, 2, 3, 4
 
 # Transition probabilities
 P = np.zeros((k, n, n))
+#
 # P[a, s2, s1] is the probability of ending in state s2 given that the agent
 # starts in state s1 and chose action a.
 # It is important to note that the initial state is the column index, not the
 # row index, so that we can use vector representation of state, S2 = P[a] . S1
+#
+# /!\ This is the transposed of what the paper calls P_a
 #
 # P[UP, (x, y), (x, y + 1)] = 0.7
 # P[UP, (x, y), (x, y - 1)] = 0.1
@@ -91,6 +96,7 @@ P[NOOP] = np.eye(n)
 grid.fill(0)
 grid[0,-1] = 1
 R = grid.reshape(-1)
+Rmax = 1.0
 
 # Observed agent action decision policy, from which we'll try to recover R
 # (for the case w = h = 5)
@@ -107,3 +113,30 @@ policy = np.array([
 # max sum(i = 1..n, min(a = 1..k and a != policy[i], (P[policy[i]][i] - P[a][i]) . (I - gamma * P[policy[i]]).inverse() . R ) - lambd * norm1(R) )
 # w/ (P[policy[i]][i] - P[a][i]) . (I - gamma * P[policy[i]]).inverse() . R >= 0 forall a != policy[i] 
 
+I = np.eye(n)
+nR = np.ndarray(n)
+J = np.ndarray((a, n, n))
+for a in range(k):
+    J[a] = inv(I - gamma * P[a])
+
+# Upper bound condition:
+# (P[a1] - P[a]) . inv(I - gamma * P[a1]) . -R <= 0 forall a != a1 forall a1 = pi(s)
+tr = np.transpose
+nb_constraints = n * k * (k - 1))
+A = np.ndarray((n, nb_constraints)
+i = 0
+# /!\ we assume here that all possible actions are used by the policy,
+# i.e. {a | exists state s st. a = pi(s) } = A
+# otherwise, we would have to take a1 in values(policy)
+for a1 in range(k):
+    for a2 in range(k):
+        if a1 = a2:
+            continue
+        A[:, i * n:(i + 1) * n] = tr(P[a1] - P[a2]).dot(tr(J[a2]))
+        i += 1
+b = np.zeros(nb_constraints)
+
+bounds = np.array(n)
+bounds.fill((Rmax, 0))
+
+nR, obj, slack, success, status, nit, message = linprog(c, A, b, bounds=bounds)
