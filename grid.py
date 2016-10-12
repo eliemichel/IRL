@@ -115,28 +115,43 @@ policy = np.array([
 
 I = np.eye(n)
 nR = np.ndarray(n)
-J = np.ndarray((a, n, n))
+J = np.ndarray((k, n, n))
 for a in range(k):
     J[a] = inv(I - gamma * P[a])
 
 # Upper bound condition:
 # (P[a1] - P[a]) . inv(I - gamma * P[a1]) . -R <= 0 forall a != a1 forall a1 = pi(s)
 tr = np.transpose
-nb_constraints = n * k * (k - 1))
-A = np.ndarray((n, nb_constraints)
-i = 0
+nb_constraints = n * k * (k - 1) + n * (k - 1)
+A = np.zeros((nb_constraints, 2 * n))
+cursor = 0
 # /!\ we assume here that all possible actions are used by the policy,
 # i.e. {a | exists state s st. a = pi(s) } = A
 # otherwise, we would have to take a1 in values(policy)
-for a1 in range(k):
-    for a2 in range(k):
-        if a1 = a2:
+for ai in range(k):
+    for aj in range(k):
+        if ai == aj:
             continue
-        A[:, i * n:(i + 1) * n] = tr(P[a1] - P[a2]).dot(tr(J[a2]))
-        i += 1
+        A[cursor:cursor + n, 0:n] = tr(P[ai] - P[aj]).dot(tr(J[ai]))
+        cursor += n
+
+for i in range(n):
+    a1 = policy[i]
+    for a in range(k):
+        if a == a1:
+            continue
+        A[cursor, 0:n] = tr(P[a1, :, i] - P[a, :, i]).dot(tr(J[a1]))
+        A[cursor, n + i] = -1
+        cursor += 1
+
 b = np.zeros(nb_constraints)
 
-bounds = np.array(n)
-bounds.fill((Rmax, 0))
+lamb = 10000.
+c = np.ndarray(2 * n)
+c[:n] = -lamb
+c[n:] = 1
 
-nR, obj, slack, success, status, nit, message = linprog(c, A, b, bounds=bounds)
+bounds = np.array( [(-Rmax, 0) for i in range(n)] + [(-1000000, 1000000) for i in range(n)] )
+
+res = linprog(c, A, b, bounds=bounds)
+heatmap(-res['x'][:n].reshape(w, h))
