@@ -35,4 +35,4 @@ Resources
 
 3. [R. S. Sutton & A. G. Barto. Reinforcement Learning: An Introduction (draft). 2014-2016](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf)
 
-
+4. [A. Y. Ng, D. Harada & S. Russel. Policy invariance under reward transformations: Theory and application to reward shaping. ICML 1999](http://www.robotics.stanford.edu/~ang/papers/shaping-icml99.pdf)
