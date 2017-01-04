@@ -9,6 +9,8 @@
 \usepackage{natbib}
 \usepackage[colorlinks=true,citecolor=blue]{hyperref}
 
+\newtheorem{theorem}{Theorem}
+\newtheorem{property}{Property}
 
 \title{Semi-Supervised Learning on Graphs \\
 for Inverse Reinforcement Learning}
@@ -21,89 +23,135 @@ for Inverse Reinforcement Learning}
 
 \section{Introduction}
 
-\subsection{Main targets of Inverted Reinforcement Learning}
+\paragraph{FIXME}
+The goal of \emph{Inverse Reinforcement Learning} (IRL) is to learn the reward function in a \emph{Markov Decision Process} (MDP) from the demonstrations of expert agents. It has many applications [like?] but, as many ML problems, it often suffers from lack of training data. [cite paper pointing this out like \cite{Vasquez14}]. \emph{Semi-Supervised Learning} (SSL) is a typical approach to tackle this issue. In this work, we explore the application of SSL methods to the class of IRL problems.
 
-\paragraph{TODO}
-\emph{Misc though quickly written down by Élie, to be clarified/reorganized/etc.}
+Why is it interesting to focus on this?
+Which are the challenges?
+
+ - IRL is ill-posed
+
+ - pb of measure of similarity to apply ssl
 
 
-%% Writen by Charles 
+\paragraph{TODO} To be cited:
+
+\cite{Ng99} -> reward shaping, not really IRL but faces the idea of a not totally known reward
+
+\cite{Abbeel04}
+
 \subsubsection{Introduction to the Reinforcement Learning}
-The general idea of Reinforcement Learning (RL) is to build an optimal policy out of a Markov Decision Process based on a reward (also called \emph{Reinforcement Function}).
+
+The general idea of Reinforcement Learning (RL) is to determine the optimal action policy of a given agent so that it maximizes a \emph{reward} (also called \emph{reinforcement function}) $R$ provided by its interaction with an environment.
+
+Formalized by \cite{Sutton98} as a policy building for a MDP
+
+A finite MDP is a tuple $(S,A,P_{sa},\gamma,R)$, where
+\begin{itemize}
+    \item $S$ is a finite set of $N$ \emph{states}.
+    \item $A=\{a_1,...,a_k\}$ is a set of $k$ \emph{actions} 
+    \item $P_{sa}$ are the state \emph{transition probabilities} upon taking action $a$ in state $s$
+    \item $\gamma$ is the \emph{discount factor}
+    \item $R$ is the \emph{reinforcement function} (bounded) 
+\end{itemize}
+
+RL has been applied to a wide variety of problems ranging from .. to .. [cite] with impressive results, especially in the field of games [cite alpha go]. But in many real life problems, the main bottleneck to the application of RL is that the hypothesis of a perfectly known reward function $R$ is not satisfied. For instance, the exact reward maximized during car driving [cite RL paper for autonomous driving but not IRL] or human walk [cite] remains unknown.
+
+Noticing this issue, \cite{Russell98} introduces the notion of IRL. Instead of looking for a policy given a reward, the algorithm is provided with a policy and asked to determine a reward function for which this policy is optimal. In other words, IRL is intended to build a reward that can explain the observed behavior of an agent.
+
+This problem has remained ill-posed for some time. A first attempt to formalized it is presented in \cite{Ng00}, which especially highlights that the problem misses some constraint for the trivial solution of a constant reward not to be a valid output.
+
+The authors apply IRL to a toy problem (5x5 grid world) but quickly notice that this approach scales up poorly to more complex problems that don't provide a policy. The input is hence relaxed from knowing the whole optimal policy to knowing only a set of trajectories sampled using this trajectories. This matches a setup in which one can record from an expert agent (e.g. a human driver for autonomous driving problem) its sequence of actions given a situation, or many situations, but not explicit the full policy, which is virtually impossible in continuous state spaces\footnote{as soon as the problem does not admit any analytic solution}.
+
+
+The general idea of Reinforcement Learning (RL) \cite{Sutton98} is to build an optimal policy out of a Markov Decision Process based on a reward (also called \emph{Reinforcement Function}).
 
 The problem is that on complex problems, it's very hard to define a reward function that will actually describe well the problem and that could generate an optimal policy that would fit the expectancies.
 
-Indeed, if we consider the example of autonomous cars for example, what kind of Reward function could we expect?
+Indeed, if we consider the example of autonomous cars \cite{Vasquez14} for example, what kind of Reward function could we expect?
 
 \paragraph{}
-The inverse reinforcement learning has been created to solve such issues. Here the strategy is the opposite one. It has been characterized informmaly by Russel in 1998. The idea is to use optimal strategies in a variety of circumstances to build a reward function that could explain the associated policy.
+Inverse Reinforcement Learning (IRL) has been created to solve such issues. Here the strategy is the opposite one. It has been first introduced by \cite{Russell98} and then formalized by \cite{Ng00}. The idea is to use optimal strategies in a variety of circumstances to build a reward function that could explain the associated policy.
 
-\subsubsection{General process of Inverse Reinforcement learning and limits}
+\subsubsection{General process of Inverse Reinforcement Learning and limitations}
 
-For this study, we will base our analysis on \cite{Ng00}
-\paragraph{Notation and problem formulation }
+For this study, we will base our analysis on \cite{Ng00}.
 
-A finite MDP is a tuple (S,A,$P_{sa}$,$\gamma$,R), where \\
+\paragraph{Notation and problem formulation}
+
+A finite MDP is a tuple $(S,A,P_{sa},\gamma,R)$, where
 \begin{itemize}
-    \item S is a finite set of N \textbf{states}.
-    \item $A={a_{1},...,a_{k}}$ is a set of \textit{k} \textbf{actions} 
-    \item $P_{sa}$ are the state \textbf{transition probabilities} upon taking action \textit{a} in state \textit{s}
-    \item $\gamma$ is the \textbf{discount factor}
-    \item R is the \textbf{reinforcement function} ( bounded) 
+    \item $S$ is a finite set of $N$ \emph{states}.
+    \item $A={a_{1},...,a_{k}}$ is a set of $k$ \emph{actions} 
+    \item $P_{sa}$ are the state \emph{transition probabilities} upon taking action $a$ in state $s$
+    \item $\gamma$ is the \emph{discount factor}
+    \item $R$ is the \emph{reinforcement function} (bounded) 
 \end{itemize}
 
 The problem of IRL is to find an efficient way of characterizing a good reward function. A reward function is considered as good if it can explain the observed behavior.
-We will take the example of a simple case where the model is known, the complete policy is observed and the state is finite. 
-Formally, let's consider that we have a given a finite state space S, a set of k actions $A={a_{1},...,a_{k}}$, transition probabilities $P_{sa}$, a discount factor $\gamma$ and a policy $\pi$.
-We are trying to find the set of reward functions R such that $\pi$ is an optimal policy associated to the MDP  (S,A,$P_{sa}$,$\gamma$,R).
 
-\paragraph{Characterization of the solution set }
+We will take the example of a simple case where the model is known, the complete policy is observed and the state is finite. 
+
+Formally, let's consider that we have a given a finite state space $S$, a set of $k$ actions $A={a_{1},...,a_{k}}$, transition probabilities $P_{sa}$, a discount factor $\gamma$ and a policy $\pi$. We are trying to find the set of reward functions $R$ such that $\pi$ is an optimal policy associated to the MDP  $(S,A,P_{sa},\gamma,R)$.
+
+\paragraph{Characterization of the solution set}
 
 In order to get simplicated notations, we will assume that for each state $\pi( s) = a_{1} $. 
-One characterization proved in the article is the following : 
-"
-Given a MDP  (S,A,$P_{sa}$,$\gamma$,R) where S is a finite space and $\gamma \quad \epsilon \quad (0,1)$. Then the policy $\pi$ given by $ \pi(s)=a_{1}$ is optimal if and only if, for all $a=a_{2},...,a_{k}$, the reward satisfies :
+One characterization proved in \cite{Ng00} is the following:
 
-$$
+\begin{property}
+Given a MDP  $(S,A,P_{sa},\gamma,R)$ where S is a finite space and $\gamma \quad \epsilon \quad (0,1)$. Then the policy $\pi$ given by $ \pi(s)=a_{1}$ is optimal if and only if, for all $a=a_{2},...,a_{k}$, the reward satisfies :
+
+\[
 ({ P }_{ a_{ 1 } }-{ P }_{ a }){ (I-\gamma { P }_{ { a }_{ 1 } }) }^{ -1 }R\quad \succeq \quad 0
-$$
-"
-The problem is that for most MDPs, it is very likely that there are many choices of \textbf{R} that would meet the previous criteria ( namely a reward function always equal to 0). It becomes therefore important to add criterias to reduce the amount of possible solutions and enhance the chances of finding a reward function that would explain observations.
-\paragraph{}
-One way of doing so, is to choose R that makes $\pi$ optimal and moreover to favor solutions that behave as close as possible from the policy $\pi$.
-We will therefore try to maximize : $$
-\sum _{ s\epsilon S }^{ \quad  }{ ({ Q }^{ \pi  } } (s,{ a }_{ 1 })\quad - \underset { a\quad \epsilon A\setminus { a }_{ 1 } }{ max } { Q }^{ \pi  }(s,a))
-$$
-\paragraph{IRL from sampled trajectories\\}
+\]
+\end{property}
 
-We have previously introduced the concept. Unfortunately, the previous equation assumes that the policy $\pi$ is known. If this policy was actually known, the IRL problem would be quite pointless because it purpose is to find a reward function that can be used to compute an optimal policy.
-Considering a state distribution D and an initial state $s_{0}$, the purpose is to find R such that $\pi$ maximizes :
-$ { \Epsilon  }_{ s_{ 0 }\sim D }\left[ { V }^{ \pi  }({ s }_{ 0 }) \right]$.
-\paragraph{}
+The problem is that for most MDPs, it is very likely that there are many choices of $R$ that would meet the previous criteria (namely a reward function always equal to 0). It becomes therefore important to add criterias to reduce the amount of possible solutions and enhance the chances of finding a reward function that would explain observations.
 
-In more realistic cases, this policy is unknown and we can have access to it only trough a set of actual trajectories in the state space.\\
-There also is a very strong hypothesis that is made that considers that every trajectories that is given as an input has been generated by the same optimal policy. \\
-In many real life cases, it is very easy to believe that several policies can lead to an optimal behavior.\\
-In most of the applications of the articles, data are in fact generated from an optimal policy.\\
+\paragraph{}
+One way of doing so, is to choose $R$ that makes $\pi$ optimal and moreover to foster solutions that behave as close as possible to the policy $\pi$. We will therefore try to maximize :
+
+\[
+\sum _{s \in S}\left(Q^\pi(s, a_1) - \max_{a \in A \setminus a_1} Q^\pi(s,a)\right)
+\]
+
+
+\paragraph{IRL from sampled trajectories}
+
+We have previously introduced the concept. Unfortunately, the previous equation assumes that the policy $\pi$ is known. If this policy was actually known, the IRL problem would be quite pointless because its purpose is to find a reward function that can be used to compute an optimal policy.
+
+Considering a state distribution $D$ and an initial state $s_{0}$, the purpose is to find $R$ such that $\pi$ maximizes :
+$\mathbb E_{ s_{ 0 }\sim D }\left[ { V }^{ \pi  }({ s }_{ 0 }) \right]$.
+
+In more realistic cases, this policy is unknown and we can have access to it only trough a set of actual trajectories in the state space.
+
+There also is a very strong hypothesis that is made that considers that every trajectories that is given as an input has been generated by the same optimal policy.
+
+In many real life cases, it is very easy to believe that several policies can lead to an optimal behavior.
+
+In most of the applications of the articles, data are in fact generated from an optimal policy.
+
 This leads us to notice that there are strong hypothesis made and strong constrainsts to the IRL process as it requires a large amount of optimal trajectories supposedly generated by the same optimal policy.
 
-\subsection{Combining Graphs and Inverse Reinforcement Learning.}
-The problem of IRL is that it results are highly dependent to the quality and the quantity of the input trajectories. Indeed, it's easy to understand that the more optimal examples that will be given to the algorithm, the better it will perform. \\
-But as we thought that IRL would solve the problem of the design of the reinforcement function, it just modified the problem. \\
-The problem we were trying to solve was how to design a relevant reward function but now we are faced to a new problem. 
-Where to find a large set of optimal strategies while minimizing human intervention and labeling?\\
+\subsection{Combining Graphs and Inverse Reinforcement Learning}
+
+The problem of IRL is that its results are highly dependent on the quality and the quantity of the input trajectories. Indeed, it's easy to understand that the more optimal examples that will be given to the algorithm, the better it will perform.
+
+But as we thought that IRL would solve the problem of the design of the reinforcement function, it just modified the problem.
+
+The problem we were trying to solve was how to design a relevant reward function but now we are facing a new problem. Where to find a large set of optimal strategies while minimizing human intervention and labeling?
+
 In \cite{Ng00}, optimal strategies are generated using the optimal policy. Those optimal strategies are then used to find the reward function and to retrieve the optimal policy but this is a chicken-egg problem.
-\\
-We decided to focus on the SSL process preceeding the IRL.\\
-The purpose of this project would be to associate SSL on trajectories and IRL so that from a small amount of labelled trajectories ( bad and good), a large set of optimal examples could be labeled and used as input to the IRL algorithm.
 
-\subsection{Semi-supervised learning in Graphs }
+We decided to focus on the SSL process preceeding the IRL. The purpose of this project would be to associate SSL on trajectories and IRL so that from a small amount of labelled trajectories (bad and good), a large set of optimal examples could be labeled and used as input to the IRL algorithm.
+
+\subsection{Semi-supervised learning in Graphs}
 
 
-Semi-supervised learning is a class of supervised learning tasks and techniques that also make use of unlabeled data for training. This is useful when a large set of data is available but only a small amount of it has already been labeled. Semi-supervised learning falls between unsupervised learning (without any labeled training data) and supervised learning (with completely labeled training data).\\
-The use of graphs for SSL has become widely used after : \\
-\txtbf{\cite{Zhu03}
-}\\
+Semi-supervised learning is a class of supervised learning tasks and techniques that also make use of unlabeled data for training. This is useful when a large set of data is available but only a small amount of it has already been labeled. Semi-supervised learning falls between unsupervised learning (without any labeled training data) and supervised learning (with completely labeled training data).
+
+The use of graphs for SSL has become widely used after : \cite{Zhu03}
 
 It is a transductive approach. 
 The idea is to use the input data to build a graphs and to use this graph to label each of the node. \\
@@ -117,6 +165,10 @@ This is why we will focus on the construction of a relevant similarity function 
 %%
 %% Written by Elie
 \subsection{Written by Elie}
+
+\paragraph{TODO}
+\emph{Misc though quickly written down by Élie, to be clarified/reorganized/etc.}
+
 The aim of Inverted Reinforcement Learning (IRL) is to learn $R$ so that it can be used in case the set of actions changes. IRL is not just about \emph{generalizing} $\pi$ but also \emph{porting} it to a different type of agent with an action set $mathcal A' \neq \mathcal A$. %% pas compris du tout ce que tu voulais dire %%
 
 Typically\footnote{Give examples}, the machine has access to different information because it has different sensing and computing capabilities. This is why it is important to recover the \emph{intrinseque} reward and not just mimic the training expert policy.
@@ -238,4 +290,3 @@ The toy pb we need must have:
 \end{appendices}
 
 \end{document}
-
