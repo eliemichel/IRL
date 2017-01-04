@@ -33,6 +33,10 @@ Which are the challenges?
 
  - pb of measure of similarity to apply ssl
 
+% Annonce du plan
+\paragraph{}
+We first review the challenges of IRL in Section~\ref{sec:irl} on one hand and SSL in Section~\ref{sec:ssl} in the other hand. In Section~\ref{sec:combine}, we present the pipeline in which we combine both problems and the main issues we then face. Then Section~\ref{sec:results} presents our application cases and elements of results. Finally, Section~\ref{sec:limitations} reviews the main limitations of our approach suggest some future work.
+
 
 \paragraph{TODO} To be cited:
 
@@ -40,11 +44,17 @@ Which are the challenges?
 
 \cite{Abbeel04}
 
-\subsubsection{Introduction to the Reinforcement Learning}
+\cite{Watkins92} -> Q-learning
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Inverse Reinforcement Learning \label{sec:irl}}
+
+\subsection{Introduction to the Reinforcement Learning \label{sec:irl}}
 
 The general idea of Reinforcement Learning (RL) is to determine the optimal action policy of a given agent so that it maximizes a \emph{reward} (also called \emph{reinforcement function}) $R$ provided by its interaction with an environment.
 
 Formalized by \cite{Sutton98} as a policy building for a MDP
+Quite intuitive already mentioned in \cite{Bellman57} and used for RL in \cite{Littman94} 
 
 A finite MDP is a tuple $(S,A,P_{sa},\gamma,R)$, where
 \begin{itemize}
@@ -55,7 +65,9 @@ A finite MDP is a tuple $(S,A,P_{sa},\gamma,R)$, where
     \item $R$ is the \emph{reinforcement function} (bounded) 
 \end{itemize}
 
-RL has been applied to a wide variety of problems ranging from .. to .. [cite] with impressive results, especially in the field of games [cite alpha go]. But in many real life problems, the main bottleneck to the application of RL is that the hypothesis of a perfectly known reward function $R$ is not satisfied. For instance, the exact reward maximized during car driving [cite RL paper for autonomous driving but not IRL] or human walk [cite] remains unknown.
+RL has been applied to a wide variety of problems ranging from robotics \cite{Kober13} to economics \cite{Tesauro02} with impressive results, especially in the field of games \cite{Silver16}. But in many real life problems, the main bottleneck to the application of RL is that the hypothesis of a perfectly known reward function $R$ is not satisfied. For instance, the exact reward maximized during car driving \cite{Shalev16} or human walk \cite{Morimoto04} remains unknown.
+
+\subsection{Inverse problem}
 
 Noticing this issue, \cite{Russell98} introduces the notion of IRL. Instead of looking for a policy given a reward, the algorithm is provided with a policy and asked to determine a reward function for which this policy is optimal. In other words, IRL is intended to build a reward that can explain the observed behavior of an agent.
 
@@ -64,35 +76,11 @@ This problem has remained ill-posed for some time. A first attempt to formalized
 The authors apply IRL to a toy problem (5x5 grid world) but quickly notice that this approach scales up poorly to more complex problems that don't provide a policy. The input is hence relaxed from knowing the whole optimal policy to knowing only a set of trajectories sampled using this trajectories. This matches a setup in which one can record from an expert agent (e.g. a human driver for autonomous driving problem) its sequence of actions given a situation, or many situations, but not explicit the full policy, which is virtually impossible in continuous state spaces\footnote{as soon as the problem does not admit any analytic solution}.
 
 
-The general idea of Reinforcement Learning (RL) \cite{Sutton98} is to build an optimal policy out of a Markov Decision Process based on a reward (also called \emph{Reinforcement Function}).
-
-The problem is that on complex problems, it's very hard to define a reward function that will actually describe well the problem and that could generate an optimal policy that would fit the expectancies.
-
-Indeed, if we consider the example of autonomous cars \cite{Vasquez14} for example, what kind of Reward function could we expect?
-
-\paragraph{}
-Inverse Reinforcement Learning (IRL) has been created to solve such issues. Here the strategy is the opposite one. It has been first introduced by \cite{Russell98} and then formalized by \cite{Ng00}. The idea is to use optimal strategies in a variety of circumstances to build a reward function that could explain the associated policy.
-
-\subsubsection{General process of Inverse Reinforcement Learning and limitations}
+\subsection{General process of Inverse Reinforcement Learning and limitations}
 
 For this study, we will base our analysis on \cite{Ng00}.
 
 \paragraph{Notation and problem formulation}
-
-A finite MDP is a tuple $(S,A,P_{sa},\gamma,R)$, where
-\begin{itemize}
-    \item $S$ is a finite set of $N$ \emph{states}.
-    \item $A={a_{1},...,a_{k}}$ is a set of $k$ \emph{actions} 
-    \item $P_{sa}$ are the state \emph{transition probabilities} upon taking action $a$ in state $s$
-    \item $\gamma$ is the \emph{discount factor}
-    \item $R$ is the \emph{reinforcement function} (bounded) 
-\end{itemize}
-
-The problem of IRL is to find an efficient way of characterizing a good reward function. A reward function is considered as good if it can explain the observed behavior.
-
-We will take the example of a simple case where the model is known, the complete policy is observed and the state is finite. 
-
-Formally, let's consider that we have a given a finite state space $S$, a set of $k$ actions $A={a_{1},...,a_{k}}$, transition probabilities $P_{sa}$, a discount factor $\gamma$ and a policy $\pi$. We are trying to find the set of reward functions $R$ such that $\pi$ is an optimal policy associated to the MDP  $(S,A,P_{sa},\gamma,R)$.
 
 \paragraph{Characterization of the solution set}
 
@@ -106,6 +94,8 @@ Given a MDP  $(S,A,P_{sa},\gamma,R)$ where S is a finite space and $\gamma \quad
 ({ P }_{ a_{ 1 } }-{ P }_{ a }){ (I-\gamma { P }_{ { a }_{ 1 } }) }^{ -1 }R\quad \succeq \quad 0
 \]
 \end{property}
+
+
 
 The problem is that for most MDPs, it is very likely that there are many choices of $R$ that would meet the previous criteria (namely a reward function always equal to 0). It becomes therefore important to add criterias to reduce the amount of possible solutions and enhance the chances of finding a reward function that would explain observations.
 
@@ -146,6 +136,20 @@ In \cite{Ng00}, optimal strategies are generated using the optimal policy. Those
 
 We decided to focus on the SSL process preceeding the IRL. The purpose of this project would be to associate SSL on trajectories and IRL so that from a small amount of labelled trajectories (bad and good), a large set of optimal examples could be labeled and used as input to the IRL algorithm.
 
+
+\section{IRL}
+
+\paragraph{FIXME}
+We go beyond by assuming to have both positive and negative examples.
+
+How to use negative trajectories for IRL?
+
+For example, $R^+ - R^-$, but there may be different $R^-$, so we could cluster negative trajectories because there are many different ways of being wrong.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Semi-Supervised Learning \label{sec:ssl}}
+
 \subsection{Semi-supervised learning in Graphs}
 
 
@@ -153,7 +157,8 @@ Semi-supervised learning is a class of supervised learning tasks and techniques 
 
 The use of graphs for SSL has become widely used after : \cite{Zhu03}
 
-It is a transductive approach. 
+It is a transductive approach.
+
 The idea is to use the input data to build a graphs and to use this graph to label each of the node. \\
 To construction of the graph is based on the notion of similarity between nodes.\\ This represents how close two datas are. The closer they are, the more plausible it would be for them to have an identical label.\\
 On some simple problems, the similarity can be built from the euclidian distance between the input vectors.\\
@@ -161,10 +166,100 @@ Nonetheless, on more complex issues, similarities are harder to build. We will d
 When similarities have been computed, the graph can be built and we can proceed to SSL ( via hard or soft harmonic functions for instance ).\\
 This is why we will focus on the construction of a relevant similarity function for trajectories.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Mixed pipeline for SSL on IRL problem \label{sec:combine}}
+
+Settup/pipeline: graph problem with positive and negative trajectories and then IRL.
+
+
+\subsection{Trajectory Similarity}
+
+Important to apply graph methods: measure of similarity.
+
+\paragraph{Question}
+How to measure the similarity between two trajectories?
+
+\paragraph{NB} Theoretically, it would be important to take into account the reward when comparing trajectories. For instance, trajectories may be very different but both go through the same set of "important" states (the ones actually shaping the reward). But here we won't consider this because we then aim at performing IRL so we don't know the reward function.
+
+\subsubsection{Similarities in Multi-Arm Bandits trajectories}
+
+There is no notion of order in Multi-Arm Bandits trajectories, so we consider the historigram of chosen arms, i.e. their distribution.
+
+\subsubsection{Policy estimation}
+
+This can be generalized to cases in which we have a number of states small wrt. the length of the trajectories. We estimate the underlying matrix $P$ such that:
+
+\[
+P_{a,s} = \mathbb P(\text{chosing action } a | \text{being in state } s)
+\]
+
+We then compare (KL-divergence?) matrices $P$ estimated from different trajectories to measure their similarity.
+
+\paragraph{Issue} Some states may not be visited by a given trajectory, or visited a too small number of times compared to the number of possible actions. So we introduce a notion of confidence into estimation for each state.
+
+We compare confident enough action distributions and also the vector of confidence among states.
+
+\subsubsection{Bigger number of states/actions}
+
+How to scale to cases in which the number of choices ($n_S$ states times $n_A$ actions) is big comparend to the length $T$ of the trajectories. Cluster RL states? Learn state representation $\phi$? Wavelets? oO
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Applications and results \label{sec:results}}
+
+using OpenAI's \verb|gym| API
+
+\subsection{MAB}
+
+\emph{Just a theoretical comment.}
+
+\subsection{Student problem}
+
+\subsection{Gridworld}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Limitations and future prospects \label{sec:limitations}}
+
+
+\subsection{Weak coupling of SSL and IRL}
+
+We just concatenated both steps. No real coupling or collaboration/retroaction.
+
+\subsection{Misc notes}
+
+\subsubsection{Many different ways of being wrong: How to learn bad policies}
+
+\subsubsection{A first toy problem}
+
+A good toy problem to test IRL must have:
+
+\begin{itemize}
+    \item A reward function which is basically a trade-off between subtargets that we need to weight
+    \item Generating (by traditionnal RL) trajectories with différent parameters for the reward trade-off
+    \item Reconstructing as much as possible the original weight of R by IRL
+    \item A way of labeling positive and pegative trajectories: equivalent to have a priori estimation of R that is +1 for correct trajectories and -1 for wrong ones. Can we release this to a more general hand-crafted prior R?
+\end{itemize}
+
+\subsection{Problem of IRL uselessness}
+
+chicken-egg problem: we learn R from trajectories to then compute a policy that is used to generate trajectories. Why not just learning trajectories from trajectories with some kind of recursive model like RNN? This pipeline is just imposing constraints on what can be learned by enforcing the solution to fit the (learned) RL problem.
+
+One reason can be to get more human control. Or a view. See misc notes in Section~\ref{sec:misc}.
+
+\subsection{TODO: Other limitations?}
+
+There is no need for IRL with the rise of DQN like \cite{Mnih15}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+
 
 %%
 %% Written by Elie
-\subsection{Written by Elie}
+\subsection{Written by Elie \label{sec:misc}}
 
 \paragraph{TODO}
 \emph{Misc though quickly written down by Élie, to be clarified/reorganized/etc.}
@@ -182,91 +277,12 @@ Secondly, IRL can be a way of \textbf{getting control} over an AI. $R$, especial
 \paragraph{}
 Let's take an extremely simplified example for the sake of illustration. Considering the case of a car driver, and imaginning that we got a way of measuring the subtargets $\Phi_{\text{timing}}$, rewarding for a short origin-to-destination timing, and $\Phi_{\text{security}}$, rewarding for safe driving. Even if there are actually many other subtargets involved in the agent true reward $R$, we will consider a \emph{partial reward} $\hat R$ of the form $\hat R = w_1 \Phi_{\text{security}}$
 
-Contextualisation: Décrire le problème et des exemples d'enjeu, d'application. Voiture autonome ?
 
-\paragraph{TODO} Biblio: Donner un petit état de l'art du SSL dans les graphs (papiers de Valko) et les articles d'IRL.
-
-Settup/pipeline: graph problem with positive and negative trajectories and then IRL.
-
-\section{Trajectory Similarity}
-
-Important to apply graph methods: measure of similarity.
-
-\paragraph{Question}
-How to measure the similarity between two trajectories?
-
-\paragraph{NB} Theoretically, it would be important to take into account the reward when comparing trajectories. For instance, trajectories may be very different but both go through the same set of "important" states (the ones actually shaping the reward). But here we won't consider this because we then aim at performing IRL so we don't know the reward function.
-
-\subsection{Similarities in Multi-Arm Bandits trajectories}
-
-There is no notion of order in Multi-Arm Bandits trajectories, so we consider the historigram of chosen arms, i.e. their distribution.
-
-\subsection{Policy estimation}
-
-This can be generalized to cases in which we have a number of states small wrt. the length of the trajectories. We estimate the underlying matrix $P$ such that:
-
-\[
-P_{a,s} = \mathbb P(\text{chosing action } a | \text{being in state } s)
-\]
-
-We then compare (KL-divergence?) matrices $P$ estimated from different trajectories to measure their similarity.
-
-\paragraph{Issue} Some states may not be visited by a given trajectory, or visited a too small number of times compared to the number of possible actions. So we introduce a notion of confidence into estimation for each state.
-
-We compare confident enough action distributions and also the vector of confidence among states.
-
-\subsection{Bigger number of states/actions}
-
-How to scale to cases in which the number of choices ($n_S$ states times $n_A$ actions) is big comparend to the length $T$ of the trajectories. Cluster RL states? Learn state representation $\phi$? Wavelets? oO
-
-\section{IRL}
-
-How to use negative trajectories for IRL?
-
-For example, $R^+ - R^-$, but there may be different $R^-$, so we could cluster negative trajectories because there are many different ways of being wrong.
-
-\section{Exemples d'application}
-
-\subsection{MAB}
-
-\emph{Just a theoretical comment.}
-
-\subsection{Student problem}
-
-\subsection{Gridworld}
-
-
-\section{Limitations}
-
-\subsection{Weak coupling of SSL and IRL}
-
-We just concatenated both steps. No real coupling or collaboration/retroaction.
-
-\subsection{TODO: Other limitations?}
-
-\section{Misc notes}
-
-Many different ways of being wrong: How to learn bad policies
-
-
-
-\subsection{A first toy problem}
-
-Started to explore a simple example: pendulum on a cart
-
-using gym
-
-The toy pb we need must have:
-
-\begin{itemize}
-    \item A reward function which is basically a trade-off between subtargets that we need to weight
-    \item Generating (by traditionnal RL) trajectories with différent parameters for the reward trade-off
-    \item Reconstructing as much as possible the original weight of R by IRL
-    \item A way of labeling positive and pegative trajectories: equivalent to have a priori estimation of R that is +1 for correct trajectories and -1 for wrong ones. Can we release this to a more general hand-crafted prior R?
-\end{itemize}
 
 \bibliographystyle{alpha}
 \bibliography{bibliography}
+
+
 
 \begin{appendices}
 \section{Tasks}
@@ -285,7 +301,6 @@ The toy pb we need must have:
     \item clean up report -> both
 \end{enumerate}
 
-\paragraph{Deadline} December 24
 
 \end{appendices}
 
