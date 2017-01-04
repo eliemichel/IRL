@@ -45,9 +45,9 @@ class StudentDilemmaEnv(gym.Env):
 
         assert (self.transition.sum(axis=2) == 1.0).all(), "invalid transition matrix"
 
-        self.reward = np.array([
+        self.reward = np.array([[[
             0, 1, -1, -10, -10, 100, -1000
-        ])
+        ]]]).repeat(k, axis=0).repeat(n, axis=1)
 
         self._seed()
 
@@ -57,8 +57,9 @@ class StudentDilemmaEnv(gym.Env):
 
     def _step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-        self.state = np.random.choice(self.state_space, p=self.transition[action, self.state])
-        reward = self.reward[self.state]
+        next_state = np.random.choice(self.state_space, p=self.transition[action, self.state])
+        reward = self.reward[action, self.state, next_state]
+        self.state = next_state
         done = False
         return self.state, reward, done, {}
 
