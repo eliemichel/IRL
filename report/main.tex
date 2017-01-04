@@ -23,9 +23,10 @@ for Inverse Reinforcement Learning}
 
 \section{Introduction}
 
-\paragraph{FIXME}
-The goal of \emph{Inverse Reinforcement Learning} (IRL) is to learn the reward function in a \emph{Markov Decision Process} (MDP) from the demonstrations of expert agents. It has many applications [like?] but, as many ML problems, it often suffers from lack of training data. [cite paper pointing this out like \cite{Vasquez14}]. \emph{Semi-Supervised Learning} (SSL) is a typical approach to tackle this issue. In this work, we explore the application of SSL methods to the class of IRL problems.
+The goal of \emph{Inverse Reinforcement Learning} (IRL) is to learn the reward function in a \emph{Markov Decision Process} (MDP) from the demonstrations of expert agents. It has many applications \cite{Kaelbling96} but, as many ML problems, it often suffers from lack of training data as for instance pointed out in \cite{Vasquez14}. \emph{Semi-Supervised Learning} (SSL) is a typical approach to tackle this issue. In this work, we explore the application of SSL methods to the class of IRL problems.
 
+\paragraph{FIXME}
+Write a little § about:
 Why is it interesting to focus on this?
 Which are the challenges?
 
@@ -53,6 +54,7 @@ We first review the challenges of IRL in Section~\ref{sec:irl} on one hand and S
 
 The general idea of Reinforcement Learning (RL) is to determine the optimal action policy of a given agent so that it maximizes a \emph{reward} (also called \emph{reinforcement function}) $R$ provided by its interaction with an environment.
 
+\paragraph{FIXME}
 Formalized by \cite{Sutton98} as a policy building for a MDP
 Quite intuitive already mentioned in \cite{Bellman57} and used for RL in \cite{Littman94} 
 
@@ -137,7 +139,7 @@ In \cite{Ng00}, optimal strategies are generated using the optimal policy. Those
 We decided to focus on the SSL process preceeding the IRL. The purpose of this project would be to associate SSL on trajectories and IRL so that from a small amount of labelled trajectories (bad and good), a large set of optimal examples could be labeled and used as input to the IRL algorithm.
 
 
-\section{IRL}
+\subsection{IRL}
 
 \paragraph{FIXME}
 We go beyond by assuming to have both positive and negative examples.
@@ -170,6 +172,10 @@ This is why we will focus on the construction of a relevant similarity function 
 \section{Mixed pipeline for SSL on IRL problem \label{sec:combine}}
 
 Settup/pipeline: graph problem with positive and negative trajectories and then IRL.
+
+\cite{Valko12}
+\cite{Audiffren15}
+\cite{Finn17} -> slightly different case in which the reward is known for a subset of the state space only
 
 
 \subsection{Trajectory Similarity}
