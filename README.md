@@ -17,7 +17,7 @@ Here is the problem description that we advocate in this project:
 Ongoing work
 ------------
 
-grid.py: Quick implementation of the first toy problem presented in (1).
+We are currently working on the project report.
 
 
 Technical Requirements
@@ -38,3 +38,5 @@ Resources
 4. [A. Y. Ng, D. Harada & S. Russel. Policy invariance under reward transformations: Theory and application to reward shaping. ICML 1999](http://www.robotics.stanford.edu/~ang/papers/shaping-icml99.pdf)
 
 5. [D. Slater. Deep-Q learning Pong with Tensorflow and PyGame. Blog post](http://www.danielslater.net/2016/03/deep-q-learning-pong-with-tensorflow.html)
+
+See `report/bibliography.bib` for more resources.
